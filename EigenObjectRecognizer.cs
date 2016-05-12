@@ -12,17 +12,14 @@ namespace Emgu.CV
       private Image<Gray, Single> newImage;
       private Matrix<float>[] eigenVals;
       private double _eigenDistanceThreshold;
-
      
-      public Image<Gray, Single>[] EigenImages
-      {
+      public Image<Gray, Single>[] EigenImages {
          get { return storedImages; }
          set { storedImages = value; }
       }
 
     
-      public String[] Labels
-      {
+      public String[] Labels {
          get { return mainLabels; }
          set { mainLabels = value; }
       }

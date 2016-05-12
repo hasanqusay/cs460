@@ -57,7 +57,7 @@ namespace Emgu.CV
          return labels;
       }
 
-      /// Create an object recognizer 
+      // Create an object recognizer 
       public EigenObjectRecognizer(Image<Gray, Byte>[] images, String[] labels, double eigenDistanceThreshold, ref MCvTermCriteria termCrit)  {
          Debug.Assert(images.Length == labels.Length);
          Debug.Assert(eigenDistanceThreshold>=0.0);
@@ -105,13 +105,13 @@ namespace Emgu.CV
       }
 
       
-      /// Decompose the image into eigen values
+      // Decompose the image into eigen values
     
       public static float[] DecomEigens(Image<Gray, Byte> src, Image<Gray, Single>[] eigenImages, Image<Gray, Single> avg)  {
          return CvInvoke.cvEigenDecomposite(  src.Ptr,  Array.ConvertAll<Image<Gray, Single>, IntPtr>(eigenImages, delegate(Image<Gray, Single> img) { return img.Ptr; }),avg.Ptr);
       }
     
-      /// Given the eigen value, reconstruct the projected image
+      // Given the eigen value, reconstruct the projected image
       public Image<Gray, Byte> EigenProjection(float[] eigenValue)   {
          Image<Gray, Byte> res = new Image<Gray, byte>(_avgImage.Width, _avgImage.Height);
          CvInvoke.cvEigenProjection(

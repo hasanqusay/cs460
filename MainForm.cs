@@ -39,15 +39,15 @@ namespace facialrecon
 
             Frame = capture.QueryFrame().Resize(320, 240, Emgu.CV.CvEnum.INTER.CV_INTER_CUBIC);
 
-            //Convert image to gray scale
+            //convert image to gray scale
             grayFrame = Frame.Convert<Gray, Byte>();
 
-            //Detect All Faces
+            //detect the faces
             MCvAvgComp[][] faces = grayFrame.DetectHaarCascade(face, 1.2, 10,Emgu.CV.CvEnum.HAAR_DETECTION_TYPE.DO_CANNY_PRUNING, new Size(20, 20));
 
-            //Detect each face in the camera and draw a rectangle around it 
+            //detect each face in the camera and draw a rectangle around it 
             foreach (MCvAvgComp f in faces[0]) {
-                //Add up the number of faces
+                //add up the number of faces
                 t = t + 1;
                 result = Frame.Copy(f.rect).Convert<Gray, byte>().Resize(100, 100, Emgu.CV.CvEnum.INTER.CV_INTER_CUBIC);
 

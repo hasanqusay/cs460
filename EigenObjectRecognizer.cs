@@ -8,16 +8,16 @@ namespace Emgu.CV
    public class EigenObjectRecognizer
    {
       private string[] mainLabels;
-      private Image<Gray, Single>[] _eigenImages;
-      private Image<Gray, Single> _avgImage;
-      private Matrix<float>[] _eigenValues;
+      private Image<Gray, Single>[] storedImages;
+      private Image<Gray, Single> newImage;
+      private Matrix<float>[] eigenVals;
       private double _eigenDistanceThreshold;
 
      
       public Image<Gray, Single>[] EigenImages
       {
-         get { return _eigenImages; }
-         set { _eigenImages = value; }
+         get { return storedImages; }
+         set { storedImages = value; }
       }
 
     
@@ -34,15 +34,15 @@ namespace Emgu.CV
 
       //Get the average Image. 
       public Image<Gray, Single> AverageImage {
-         get { return _avgImage; }
-         set { _avgImage = value; }
+         get { return newImage; }
+         set { newImage = value; }
       }
 
       // Get the eigen values of each of the images
       public Matrix<float>[] EigenValues
       {
-         get { return _eigenValues; }
-         set { _eigenValues = value; }
+         get { return eigenVals; }
+         set { eigenVals = value; }
       }
 
 
@@ -57,17 +57,17 @@ namespace Emgu.CV
          return labels;
       }
 
-      // Create an object recognizer 
+      /// Create an object recognizer 
       public EigenObjectRecognizer(Image<Gray, Byte>[] images, String[] labels, double eigenDistanceThreshold, ref MCvTermCriteria termCrit)  {
          Debug.Assert(images.Length == labels.Length);
          Debug.Assert(eigenDistanceThreshold>=0.0);
 
-         FindEigens(images, ref termCrit, out _eigenImages, out _avgImage);
+         FindEigens(images, ref termCrit, out storedImages, out newImage);
 
-         _eigenValues = Array.ConvertAll<Image<Gray, Byte>, Matrix<float>>(images,
+         eigenVals = Array.ConvertAll<Image<Gray, Byte>, Matrix<float>>(images,
              delegate(Image<Gray, Byte> img)
              {
-                return new Matrix<float>(DecomEigens(img, _eigenImages, _avgImage));
+                return new Matrix<float>(DecomEigens(img, storedImages, newImage));
              });
 
          mainLabels = labels;
@@ -87,12 +87,12 @@ namespace Emgu.CV
          
          int maxEigenObjs = termCrit.max_iter;
 
-         #region initialize eigen images
+        
          eigenImages = new Image<Gray, float>[maxEigenObjs];
          for (int i=0; i< eigenImages.Length; i++)
             eigenImages[i] = new Image<Gray, float>(width, height);
          IntPtr[] eigObjs = Array.ConvertAll<Image<Gray, Single>, IntPtr>(eigenImages, delegate(Image<Gray, Single> img) { return img.Ptr; });
-         #endregion
+         
 
          avg = new Image<Gray, Single>(width, height);
 
@@ -105,27 +105,27 @@ namespace Emgu.CV
       }
 
       
-      // Decompose the image into eigen values
+      /// Decompose the image into eigen values
     
       public static float[] DecomEigens(Image<Gray, Byte> src, Image<Gray, Single>[] eigenImages, Image<Gray, Single> avg)  {
          return CvInvoke.cvEigenDecomposite(  src.Ptr,  Array.ConvertAll<Image<Gray, Single>, IntPtr>(eigenImages, delegate(Image<Gray, Single> img) { return img.Ptr; }),avg.Ptr);
       }
     
-      // Given the eigen value, reconstruct the projected image
+      /// Given the eigen value, reconstruct the projected image
       public Image<Gray, Byte> EigenProjection(float[] eigenValue)   {
-         Image<Gray, Byte> res = new Image<Gray, byte>(_avgImage.Width, _avgImage.Height);
+         Image<Gray, Byte> res = new Image<Gray, byte>(newImage.Width, newImage.Height);
          CvInvoke.cvEigenProjection(
-             Array.ConvertAll<Image<Gray, Single>, IntPtr>(_eigenImages, delegate(Image<Gray, Single> img) { return img.Ptr; }),
+             Array.ConvertAll<Image<Gray, Single>, IntPtr>(storedImages, delegate(Image<Gray, Single> img) { return img.Ptr; }),
              eigenValue,
-             _avgImage.Ptr,
+             newImage.Ptr,
              res.Ptr);
          return res;
       }
 
 
       public float[] GetEigenDistances(Image<Gray, Byte> image)  {
-         using (Matrix<float> eigenValue = new Matrix<float>(DecomEigens(image, _eigenImages, _avgImage)))
-            return Array.ConvertAll<Matrix<float>, float>(_eigenValues,
+         using (Matrix<float> eigenValue = new Matrix<float>(DecomEigens(image, storedImages, newImage)))
+            return Array.ConvertAll<Matrix<float>, float>(eigenVals,
                 delegate(Matrix<float> eigenValueI)
                 {
                    return (float)CvInvoke.cvNorm(eigenValue.Ptr, eigenValueI.Ptr, Emgu.CV.CvEnum.NORM_TYPE.CV_L2, IntPtr.Zero);
